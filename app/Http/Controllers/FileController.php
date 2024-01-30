@@ -116,6 +116,6 @@ class FileController extends Controller
         $file->delete();
 
         return redirect()->route('files.index')
-            ->with('success', 'File deleted successfully');
+            ->with('danger', 'File deleted successfully');
     }
 }
