@@ -15,11 +15,11 @@ class File extends Model
         'name',
         'display_name',
         'extension',
-        'created_by'
+        'user_id'
     ];
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
     public function folder()
     {

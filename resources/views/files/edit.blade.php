@@ -28,23 +28,13 @@
                         <div class="card-header">
                             <h3 class="card-title">Edit File</h3>
                         </div>
-                        <!-- /.card-header -->
+
                         <div class="card-body">
                             <form method="POST" action="{{ route('files.update', $file->id) }}"
                                 enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
 
-                                {{-- <div class="form-group">
-                                    <label for="uuid">UUID<span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control @error('uuid') is-invalid @enderror"
-                                           id="uuid" name="uuid" value="{{ old('uuid', $file->uuid) }}" />
-                                    @error('uuid')
-                                    <span class="error invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                    @enderror
-                                </div> --}}
 
                                 <div class="form-group">
                                     <label for="folder_id">Folder<span class="text-danger">*</span></label>
@@ -88,19 +78,21 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="file">Choose File<span class="text-danger">*</span></label>
-                                    <input id="file" type="file"
-                                        class="form-control @error('file') is-invalid @enderror" name="file"
-                                        value="{{ old('file') }}" />
-                                    @error('file')
-                                        <span class="error invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror
+                                    <label for="file">File<span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <div class="custom-file">
+                                            <input id="file" type="file" class="custom-file-input @error('file') is-invalid @enderror" name="file">
+                                            <label class="custom-file-label" for="file" id="file-label">{{ $file->name }}</label>
+                                        </div>
+                                        @error('file')
+                                            <div class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </div>
+                                        @enderror
+                                    </div>
                                 </div>
+                                
 
-
-                                <!-- Add other fields as needed -->
 
                                 <div class="card-footer">
                                     <button type="submit" class="btn btn-primary">Update File</button>
@@ -116,6 +108,15 @@
 
 @push('child-scripts')
     <script>
-        // Add any custom scripts related to the file edit page here
+        const fileInput = document.getElementById('file');
+
+        // Listen for change event on file input
+        fileInput.addEventListener('change', function() {
+            // Get the selected file name
+            const fileName = fileInput.files[0].name;
+
+            // Display the selected file name
+             document.getElementById('file-label').innerText = fileName;
+        });
     </script>
 @endpush

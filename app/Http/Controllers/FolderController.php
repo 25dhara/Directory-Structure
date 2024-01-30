@@ -9,13 +9,8 @@ use App\Models\User_Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
-
 class FolderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $user = User::find(Auth::id());
@@ -32,29 +27,18 @@ class FolderController extends Controller
         });
         return view('folders.list', compact('filteredFolders'));
     }
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $permissions = Permission::all();
         return view('folders.create', compact('permissions'));
-        // return view('folders.create');
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // dd($request->all());
-        // Create the folder
         $folder = Folder::create([
             'name' => $request->name,
-            'created_by' => Auth::id()
+            'user_id' => Auth::id()
         ]);
 
-        // Store permissions for the folder
         $permissions = $request->input('permissions', []);
         foreach ($permissions as $permission) {
             User_Folder::create([
@@ -63,55 +47,46 @@ class FolderController extends Controller
                 'permission_id' => $permission
             ]);
         }
-
         return redirect()->route('folders.index')
             ->with('success', 'Folder created successfully');
     }
-
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $folder = Folder::find($id);
-        return view('folders.edit', compact('folder'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function edit($id)
     {
         $folder = Folder::findOrFail($id);
-
-        $folder->update([
-            'name' => $request->name,
-            // 'created_by' => $request->created_by, // Assuming 'created_by' is in the request
-            // Add other fields as needed
+        $permissions = Permission::all();
+        return view('folders.edit', compact('folder', 'permissions'));
+    }
+    public function update(Request $request, $id)
+    {
+        $folder = Folder::findOrFail($id);
+        $request->validate([
+            'name' => 'required|string|max:255|unique:folders,name,' . $folder->id,
+            'permissions' => 'array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
-        return redirect()->route('folders.index')
-            ->with('success', 'Folder updated successfully');
-    }
+        $folder->name = $request->name;
+        $folder->save();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+        $user_id = Auth::id();
+        $permissions = $request->input('permissions', []);
+
+        $folder->users()->detach($user_id);
+
+        foreach ($permissions as $permission) {
+            $folder->users()->attach($user_id, ['permission_id' => $permission]);
+        }
+        return redirect()->route('folders.index')->with('success', 'Folder updated successfully');
+    }
+    public function destroy($id)
     {
         $folder = Folder::findOrFail($id);
-        $folder->delete();
+        $hasFiles = $folder->files()->exists();
+        if ($hasFiles) {
+            return back()->with('danger', 'Cannot delete the folder because it has associated files.');
+        }
 
-        return redirect()->route('folders.index')
-            ->with('success', 'Folder deleted successfully');
+        $folder->delete();
+        return redirect()->route('folders.index')->with('danger', 'Folder deleted successfully');
     }
 }

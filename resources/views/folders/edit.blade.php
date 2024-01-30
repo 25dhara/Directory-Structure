@@ -6,7 +6,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-12">
-                    <h1>Edit Folder</h1>
+                    <h1>Folders</h1>
                 </div>
                 <div class="col-sm-12">
                     <ol class="breadcrumb float-sm-right">
@@ -35,9 +35,30 @@
                                 @method('PUT')
 
                                 <div class="form-group">
-                                    <label>Name<span class="text-danger">*</span></label>
+                                    <label for="name">Name<span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                        name="name" value="{{ old('name', $folder->name) }}" />
+                                        id="name" name="name" value="{{ $folder->name }}" />
+                                    @error('name')
+                                        <span class="error invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                                <div class="form-group">
+                                    <label for="name">Assign Permission</label>
+                                    <div>
+                                        @foreach ($permissions as $permission)
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" name="permissions[]" type="checkbox"
+                                                    id="inlineCheckbox{{ $permission->id }}"
+                                                    value="{{ $permission->id }}"
+                                                    {{ $folder->permissions->contains('id', $permission->id) ? 'checked' : '' }} />
+                                                <label class="form-check-label"
+                                                    for="inlineCheckbox{{ $permission->id }}">{{ $permission->name }}</label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
                                     @error('name')
                                         <span class="error invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -56,9 +77,3 @@
         </div>
     </section>
 @endsection
-
-@push('child-scripts')
-    <script>
-        // Add any custom scripts related to the folder editing page here
-    </script>
-@endpush

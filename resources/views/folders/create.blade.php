@@ -62,24 +62,6 @@
                                         </span>
                                     @enderror
                                 </div>
-                                {{-- <div class="form-group">
-                                    <label for="name">Assign Permission</label>
-                                    <div>
-                                        @foreach ($permissions as $permissionId => $permissionName)
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" name="permissions[]" type="checkbox"
-                                                    id="permission_{{ $permissionId }}" value="{{ $permissionId }}" />
-                                                <label class="form-check-label"
-                                                    for="permission_{{ $permissionId }}">{{ $permissionName }}</label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                    @error('name')
-                                        <span class="error invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror
-                                </div> --}}
 
                                 <div class="card-footer">
                                     <button type="submit" class="btn btn-primary">Create</button>
@@ -92,9 +74,3 @@
         </div>
     </section>
 @endsection
-
-@push('child-scripts')
-    <script>
-        // Add any custom scripts related to the folder creation page here
-    </script>
-@endpush

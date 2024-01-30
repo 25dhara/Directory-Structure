@@ -4,25 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\File;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 
 class FileController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        $files = File::with('folder')->get();
+        $user = User::find(Auth::id());
+
+        $folders = $user->folders()->with('permissions')->get();
+        $uniqueFolderNames = $folders->pluck('name')->unique();
+
+        $files = File::with('folder')->whereHas('folder', function ($query) use ($uniqueFolderNames) {
+            $query->whereIn('name', $uniqueFolderNames);
+        })->get();
+
         return view('files.list', compact('files'));
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $user = User::find(Auth::id());
@@ -39,116 +42,80 @@ class FileController extends Controller
         return view('files.create', compact('folders'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // Validate the request here if needed
-
         $file = $request->file('file');
-        $uuid = \Illuminate\Support\Str::uuid();
-
-
-        $filename = $uuid . '_' . $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
-        $filenameWithExtension = $filename . '.' . $extension;
-
-
-        $file->move(public_path('storage/' . $uuid), $filenameWithExtension);
-
+        $file->move(public_path('storage/'), $request->name . '.' . $extension);
 
         File::create([
-            'uuid' => $uuid,
+            'uuid' => Str::uuid(),
             'folder_id' => $request->folder_id,
-            'path' => 'storage/' . $uuid,
-            'name' => $filenameWithExtension,
+            'path' => 'storage/' . $request->display_name,
+            'name' => $request->name,
             'display_name' => $request->display_name,
             'extension' => $extension,
-            'created_by' => Auth::id()
+            'user_id' => Auth::id()
         ]);
 
         return redirect()->route('files.index')
             ->with('success', 'File created successfully');
     }
 
+    public function edit($id)
+    {
+        $file = File::findOrFail($id);
 
-    // public function show(string $id)
-    // {
-    //     //
-    // }
+        $user = User::find(Auth::id());
+        $allFolders = $user->folders()->get();
+        $uniqueFolders = [];
 
-    // /**
-    //  * Show the form for editing the specified resource.
-    //  */
-    // public function edit($id)
-    // {
-    //     $file = Files::findOrFail($id);
-    //     $folders = Folder::all();
+        $folders = $allFolders->filter(function ($folder) use (&$uniqueFolders) {
+            $folderName = $folder->name;
+            if (!in_array($folderName, $uniqueFolders)) {
+                $uniqueFolders[] = $folderName;
+                return true;
+            }
+            return false;
+        });
+        return view('files.edit', compact('file', 'folders'));
+    }
 
-    //     return view('files.edit', compact('file', 'folders'));
-    // }
+    public function update(Request $request, $id)
+    {
+        $file = File::findOrFail($id);
 
-    // /**
-    //  * Update the specified resource in storage.
-    //  */
-    // public function update(Request $request, $id)
-    // {
-    //     $file = Files::findOrFail($id);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'display_name' => 'required|string|max:255',
+            'file' => 'nullable|file|max:10240',
+        ]);
 
-    //     // Validate the request here if needed
+        $file->name = $request->name;
+        $file->display_name = $request->display_name;
 
-    //     // Check if a new file is uploaded
-    //     if ($request->hasFile('file')) {
-    //         // A new file is uploaded, handle file update
-    //         $newFile = $request->file('file');
-    //         $uuid = $file->uuid;
+        if ($request->hasFile('file')) {
+            if (file_exists(public_path($file->path))) {
+                unlink(public_path($file->path));
+            }
+            $newFile = $request->file('file');
+            $extension = $newFile->getClientOriginalExtension();
+            $newFileName = $request->name . '.' . $extension;
+            $newFile->move(public_path('storage/'), $newFileName);
+            $file->path = 'storage/' . $newFileName;
+            $file->extension = $extension;
+        }
+        $file->save();
+        return redirect()->route('files.index')->with('success', 'File updated successfully');
+    }
 
-    //         // Generate a unique filename with extension
-    //         $filename = $uuid . '_' . $newFile->getClientOriginalName();
-    //         $extension = $newFile->getClientOriginalExtension();
-    //         $filenameWithExtension = $filename . '.' . $extension;
 
-    //         // Move the file to the public storage directory
-    //         $newFile->move(public_path('storage/' . $uuid), $filenameWithExtension);
+    public function destroy($id)
+    {
+        $file = File::findOrFail($id);
+        $file->delete();
 
-    //         // Remove the old file
-    //         Storage::delete($file->path . '/' . $file->name);
-
-    //         // Update necessary information in the database
-    //         $file->update([
-    //             'folder_id' => $request->folder_id,
-    //             'path' => 'storage/' . $uuid, // Store relative path from the public directory
-    //             'name' => $filenameWithExtension,
-    //             'display_name' => $request->display_name,
-    //             'extension' => $extension,
-    //             // Add other fields as needed
-    //         ]);
-
-    //         return redirect()->route('files.index')
-    //             ->with('success', 'File updated successfully');
-    //     }
-
-    //     // If no new file is uploaded, update other information without changing the file
-    //     $file->update([
-    //         'folder_id' => $request->folder_id,
-    //         'display_name' => $request->display_name,
-    //         // Add other fields as needed
-    //     ]);
-
-    //     return redirect()->route('files.index')
-    //         ->with('success', 'File information updated successfully');
-    // }
-
-    // /**
-    //  * Remove the specified resource from storage.
-    //  */
-    // public function destroy($id)
-    // {
-    //     $file = Files::findOrFail($id);
-    //     $file->delete();
-
-    //     return redirect()->route('files.index')
-    //         ->with('success', 'File deleted successfully');
-    // }
+        return redirect()->route('files.index')
+            ->with('success', 'File deleted successfully');
+    }
 }

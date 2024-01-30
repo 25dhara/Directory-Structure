@@ -72,7 +72,7 @@
 
 
                                 <div class="form-group">
-                                    <label for="file">Choose File<span class="text-danger">*</span></label>
+                                    <label for="file">File<span class="text-danger">*</span></label>
                                     <input id="file" type="file"
                                         class="form-control @error('file') is-invalid @enderror" name="file"
                                         value="{{ old('file') }}" />
@@ -95,4 +95,3 @@
         </div>
     </section>
 @endsection
-

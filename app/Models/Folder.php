@@ -12,11 +12,11 @@ class Folder extends Model
     use HasFactory;
     protected $fillable = [
         'name',
-        'created_by'
+        'user_id'
     ];
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
     public function permissions(): BelongsToMany
     {

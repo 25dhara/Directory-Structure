@@ -47,19 +47,31 @@
                                                 <tr>
                                                     <td>{{ $file->id }}</td>
                                                     <td>{{ $file->display_name }}</td>
-                                                    <td>{{ $file->folder_name }}</td>
+                                                    <td>{{ $file->folder->name }}</td>
                                                     <td>
-                                                        <a href="{{ route('files.edit', $file->id) }}"
-                                                            class="fas fa-edit"></a>
-                                                        <a href="#"
-                                                            onclick="event.preventDefault(); document.getElementById('delete-form-{{ $file->id }}').submit();"><i
-                                                                class="fas fa-trash text-danger"></i></a>
-                                                        <form id="delete-form-{{ $file->id }}"
-                                                            action="{{ route('files.destroy', $file->id) }}"
-                                                            method="POST" style="display: none;">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                        </form>
+                                                        @if ($file->folder->permissions->contains('name', 'read'))
+                                                            <i class="fas fa-eye"></i>
+                                                        @endif
+                                                        @if ($file->folder->permissions->contains('name', 'write'))
+                                                            <i class="fas fa-pen"></i>
+                                                        @endif
+
+                                                        @if ($file->folder->permissions->contains('name', 'update'))
+                                                            <a href="{{ route('files.edit', $file->id) }}"
+                                                                class="fas fa-edit"></a>
+                                                        @endif
+                                                        @if ($file->folder->permissions->contains('name', 'delete'))
+                                                            <a href="#"
+                                                                onclick="event.preventDefault(); document.getElementById('delete-form-{{ $file->id }}').submit();"><i
+                                                                    class="fas fa-trash text-danger"></i></a>
+
+                                                            <form id="delete-form-{{ $file->id }}"
+                                                                action="{{ route('files.destroy', $file->id) }}"
+                                                                method="POST" style="display: none;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                            </form>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
